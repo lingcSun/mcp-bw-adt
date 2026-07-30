@@ -21,6 +21,11 @@ export interface ToolDef<S extends z.ZodTypeAny> {
    */
   needsClient?: boolean
   /**
+   * When true, blocked under read-only profiles. Source of truth for mutating
+   * tool set (derived from ALL_TOOLS at startup).
+   */
+  mutating?: boolean
+  /**
    * Execute the tool. `args` is already validated against `params`. Must NOT
    * read/write files itself except via fileio helpers when it opts in.
    */
@@ -105,9 +110,12 @@ export const outputPathField = z
   .string()
   .optional()
   .describe(
-    "If provided, the full result is written to this path (under the workdir) — " +
-      "objects as JSON, raw XML strings as plain text — and the tool returns only a small " +
-      "summary envelope { ok, outputPath, bytes, summary }. " +
-      "Use this for large responses (XML, table data, logs, dataflow graphs). " +
+    "If provided, the full result is written to this path (under the workdir) and the tool " +
+      "returns only a small summary envelope { ok, outputPath, bytes, summary }. " +
+      "Objects/arrays are written as JSON; ONLY the bw_*_get_xml family writes the raw XML " +
+      "string as plain text (that file is directly reusable as xmlPath in a later save call). " +
+      "Other *_get tools (e.g. bw_dtp_get, bw_trfn_get) write the PARSED XML-to-JSON tree, " +
+      "not raw XML — use the matching bw_*_get_xml tool when you need the raw XML string. " +
+      "Use outputPath for large responses (XML, table data, logs, dataflow graphs). " +
       "When set, tools skip inline pagination/projection so the file contains the complete payload."
   )

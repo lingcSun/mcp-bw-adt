@@ -11,6 +11,7 @@ import {
   isAdtException,
   isHttpError,
   isLoginError,
+  isTransportRequiredError,
 } from "bw-adt-api"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
@@ -21,6 +22,24 @@ function summarize(err: unknown): string {
 
 /** Convert any thrown value into an MCP error result. */
 export function toMcpError(err: unknown): CallToolResult {
+  if (isTransportRequiredError(err)) {
+    return text(
+      JSON.stringify(
+        {
+          code: err.code,
+          message: err.message,
+          objectUri: err.objectUri,
+          transports: err.transports,
+          hint:
+            "Choose an existing TR via transport=<TRKORR>, or set createTransport=true to create a new one. " +
+            "Optionally call bw_transport_check first to list available requests.",
+        },
+        null,
+        2
+      ),
+      true
+    )
+  }
   // Try to extract the rich ADT payload first.
   if (isAdtException(err)) {
     if (isLoginError(err)) {

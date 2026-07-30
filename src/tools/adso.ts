@@ -1,16 +1,12 @@
 /**
  * ADSO (Advanced DataStore Object) tools.
  *
- * Workflow guidance surfaced in descriptions:
- *   - read current XML (format=summary) → mutate via add_field or edit file → save_and_activate.
- *   - large XML bodies go through the *Content/*Path dual fields (mechanism A).
- *   - large reads (get/details) take outputPath to avoid bloating context.
+ * Workflow: get_xml (outputPath) → edit file → save_and_activate (xmlPath).
+ * Or use atomic helpers (add_field / create) that hide large XML from the caller.
  */
 import { z } from "zod"
 import { defineTool, largeInput, outputPathField, readLargeInput } from "../tool"
 import { shapeSaveResult, shapeXmlResult } from "../response"
-
-const VERSION = z.enum(["m", "a", "d"]).describe("Version: m=active, a=modified, d=revised.")
 
 const FIELD_DATA_TYPES = [
   "CHAR",
@@ -27,27 +23,22 @@ const FIELD_DATA_TYPES = [
 
 export const adsoTools = [
   defineTool({
-    name: "bw_adso_get",
-    description: "Get ADSO raw metadata. Prefer outputPath — payloads are large.",
-    params: z.object({
-      id: z.string().describe("ADSO technical name."),
-      forceCacheUpdate: z.boolean().optional(),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      return client.getADSO(args.id, args.forceCacheUpdate)
-    },
-  }),
-
-  defineTool({
     name: "bw_adso_details",
-    description: "Get parsed ADSO metadata (fields, indexes, partitioning). Prefer outputPath.",
+    description:
+      "Get parsed ADSO metadata (fields, indexes, partitioning). Prefer outputPath. " +
+      "May include configuration, associated DDIC tables, and related DDIC links when the " +
+      "enriched client path is available; otherwise returns the standard details projection.",
     params: z.object({
       id: z.string(),
       forceCacheUpdate: z.boolean().optional(),
       outputPath: outputPathField,
     }),
     async run(client, args) {
+      const facade = (client as { adso?: { details?: (id: string, force?: boolean) => Promise<unknown> } })
+        .adso
+      if (facade?.details) {
+        return facade.details(args.id, args.forceCacheUpdate)
+      }
       return client.getADSODetails(args.id, args.forceCacheUpdate)
     },
   }),
@@ -64,10 +55,11 @@ export const adsoTools = [
   defineTool({
     name: "bw_adso_get_xml",
     description:
-      "Get the raw ADSO XML used for PUT updates. Large (15–80 KB) — ALWAYS set outputPath. " +
-      "With outputPath, the full XML is written to disk (usable as xmlPath later) and the MCP " +
-      "response is only a summary envelope. Without outputPath, format='summary' (default) returns " +
-      "a small overview; format='xml' returns the raw XML inline. Step 1 of read-modify-write.",
+      "Get the raw ADSO XML used for PUT updates. ALWAYS prefer outputPath — payloads are " +
+      "15–80 KB. With outputPath, the full XML is written to disk (reuse as xmlPath in " +
+      "bw_adso_save_and_activate) and the MCP response is only a summary envelope. Without " +
+      "outputPath, format='summary' (default) returns a small overview; format='xml' returns " +
+      "the raw XML inline. Step 1 of read-modify-write.",
     params: z.object({
       id: z.string(),
       forceCacheUpdate: z.boolean().optional(),
@@ -86,64 +78,6 @@ export const adsoTools = [
   }),
 
   defineTool({
-    name: "bw_adso_configuration",
-    description: "Get ADSO configuration info.",
-    params: z.object({ id: z.string() }),
-    async run(client, args) {
-      return client.getADSOConfiguration(args.id)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_tables",
-    description: "Get the associated DDIC table names of an ADSO.",
-    params: z.object({ id: z.string() }),
-    async run(client, args) {
-      return client.getADSOTables(args.id)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_node_path",
-    description: "Get the node path of an ADSO (version-qualified).",
-    params: z.object({ name: z.string(), version: VERSION.optional() }),
-    async run(client, args) {
-      return client.getADSONodePath(args.name, args.version)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_lock",
-    description: "Lock an ADSO. Returns { lockHandle, corrNr }. Used before manual update/activate.",
-    params: z.object({ id: z.string() }),
-    async run(client, args) {
-      return client.lockADSO(args.id)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_unlock",
-    description: "Unlock a previously locked ADSO.",
-    params: z.object({ id: z.string() }),
-    async run(client, args) {
-      return client.unlockADSO(args.id)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_activate",
-    description: "Activate an ADSO. lockHandle/corrNr are optional (defaults applied server-side).",
-    params: z.object({
-      id: z.string(),
-      lockHandle: z.string().optional(),
-      corrNr: z.string().optional().describe("Transport request number."),
-    }),
-    async run(client, args) {
-      return client.activateADSO(args.id, args.lockHandle, args.corrNr)
-    },
-  }),
-
-  defineTool({
     name: "bw_adso_check",
     description: "Check ADSO consistency.",
     params: z.object({ id: z.string() }),
@@ -153,50 +87,46 @@ export const adsoTools = [
   }),
 
   defineTool({
-    name: "bw_adso_update",
-    description:
-      "Update an ADSO via PUT. Provide the XML inline (xmlContent) or from a file (xmlPath). " +
-      "lockHandle is required. Usually prefer bw_adso_save_and_activate instead.",
-    params: z.object({
-      id: z.string(),
-      lockHandle: z.string().describe("Required lock handle from bw_adso_lock."),
-      ...largeInput("xml"),
-      corrNr: z.string().optional(),
-      timestamp: z.string().optional(),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      const xml = await readLargeInput(args, "xml", true)
-      return client.updateADSO(args.id, xml!, args.lockHandle, {
-        corrNr: args.corrNr,
-        timestamp: args.timestamp,
-      })
-    },
-  }),
-
-  defineTool({
     name: "bw_adso_save_and_activate",
     description:
-      "One-stop: lock → PUT → (optional) activate → unlock. XML via xmlContent or xmlPath. " +
+      "One-stop: lock → PUT → (optional) activate → unlock. Prefer xmlPath (from " +
+      "bw_adso_get_xml + outputPath) over inline xmlContent for large bodies. " +
+      "When a transport is required: pass transport=<existing TRKORR> OR createTransport=true " +
+      "(use bw_transport_check to list available requests). Do not omit both. " +
       "Returns a compact projection; set outputPath to keep the full update/activate detail.",
     params: z.object({
       id: z.string(),
       ...largeInput("xml"),
-      transport: z.string().optional(),
-      transportDescription: z.string().optional(),
+      transport: z
+        .string()
+        .optional()
+        .describe("Existing transport request number to use."),
+      createTransport: z
+        .boolean()
+        .optional()
+        .describe(
+          "If true and recording is required with no transport/corrNr, create a new TR. " +
+            "Default false — you must choose transport or createTransport."
+        ),
+      transportDescription: z
+        .string()
+        .optional()
+        .describe("Description used only when createTransport=true."),
       autoActivate: z.boolean().optional().describe("Default true."),
       timestamp: z.string().optional(),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       const xml = await readLargeInput(args, "xml", true)
       const raw = await client.saveAndActivateADSO(args.id, xml!, {
         transport: args.transport,
+        createTransport: args.createTransport,
         transportDescription: args.transportDescription,
         autoActivate: args.autoActivate,
         timestamp: args.timestamp,
       })
-      return shapeSaveResult(raw as Record<string, unknown>, args.outputPath)
+      return shapeSaveResult(raw as unknown as Record<string, unknown>, args.outputPath)
     },
   }),
 
@@ -216,18 +146,21 @@ export const adsoTools = [
       precision: z.number().int().positive().optional(),
       scale: z.number().int().nonnegative().optional(),
       transport: z.string().optional(),
+      createTransport: z.boolean().optional(),
       transportDescription: z.string().optional(),
       autoActivate: z.boolean().optional(),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
-      const { id, transport, transportDescription, autoActivate, outputPath, ...field } = args
-      const raw = await client.addADSOField(
-        id,
-        field,
-        { transport, transportDescription, autoActivate }
-      )
-      return shapeSaveResult(raw as Record<string, unknown>, outputPath)
+      const { id, transport, createTransport, transportDescription, autoActivate, outputPath, ...field } = args
+      const raw = await client.addADSOField(id, field, {
+        transport,
+        createTransport,
+        transportDescription,
+        autoActivate,
+      })
+      return shapeSaveResult(raw as unknown as Record<string, unknown>, outputPath)
     },
   }),
 
@@ -255,6 +188,7 @@ export const adsoTools = [
       autoActivate: z.boolean().optional().describe("Default false."),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       const { outputPath: _outputPath, ...createArgs } = args
       return client.createADSO(createArgs)

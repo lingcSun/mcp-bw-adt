@@ -28,6 +28,7 @@ export const transportTools = [
       devclass: z.string().optional(),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       return client.createTransport(args.refUri, args.description, args.devclass)
     },

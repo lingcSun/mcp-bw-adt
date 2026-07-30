@@ -5,10 +5,17 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that e
 (ABAP Developer Tools) operations — to LLM clients such as ZCode, Claude Desktop, or any
 MCP-compatible client.
 
-It wraps the ~100 public methods of `BWAdtClient` (ADSO, Transformation, DTP, DataSource,
-Process Chain, InfoObject, DDIC tables, search, dataflow lineage, transports, …) as MCP tools,
-with a **local-file buffering layer** that keeps large XML payloads and table data out of the
-LLM context window.
+It exposes a **Public** subset of `BWAdtClient` domain operations (ADSO, Transformation, DTP,
+DataSource, Process Chain, InfoObject, DDIC, search, dataflow, transports, …) as MCP tools —
+about **64 tools** after Public-surface consolidation — with a **local-file buffering layer**
+that keeps large XML payloads and table data out of the LLM context window.
+
+> **BREAKING (Public surface):** Atomic `lock` / `unlock` / bare `update` / bare `activate`,
+> raw `bw_*_get` (prefer `*_details` + `*_get_xml`), `bw_quick_search`, `bw_object_create` /
+> `update` / `activate`, `bw_adso_node_path`, and several duplicate DDIC/system tools were
+> removed from `tools/list`. Prefer: `*_get_xml` + `outputPath` → edit file → `*_save_and_activate`
+> + `xmlPath`. Mutating tools are marked on each `ToolDef` (`mutating: true`) and derived at
+> startup for read-only profile guards.
 
 ---
 
@@ -118,7 +125,7 @@ Add the server to your client's MCP config. Examples:
   "mcpServers": {
     "bw-adt": {
       "command": "node",
-      "args": ["E:/04-code/02-personnal/mcp-bw-adt-api/build/index.js"],
+      "args": ["E:/04-code/02-personnal/bw-adt/mcp-bw-adt-api/build/index.js"],
       "env": {
         "BW_PROFILES": "test,prod",
         "BW_DEFAULT": "test",

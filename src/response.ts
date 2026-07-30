@@ -20,6 +20,12 @@ export interface PaginationMeta {
   truncated: boolean
   /** Hint shown to the LLM when results were truncated. */
   hint?: string
+  /** Set when a column list was rejected by SAP and the query fell back to
+   * SELECT * with client-side projection (bw_table_get_data Bug 4 mitigation). */
+  fallback?: string
+  /** Requested columns that SAP omitted from the SELECT * result (and were
+   * therefore dropped), when the SELECT * fallback ran. */
+  droppedColumns?: string[]
 }
 
 export interface TableResult {

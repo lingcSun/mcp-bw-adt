@@ -37,20 +37,6 @@ export const searchTools = [
   }),
 
   defineTool({
-    name: "bw_quick_search",
-    description:
-      "Quick name search for BW objects. Lighter than bw_search_objects. Returns a list. Use outputPath for large result sets.",
-    params: z.object({
-      searchTerm: z.string(),
-      objectType: z.enum(SEARCH_OBJECT_TYPES).optional(),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      return client.quickSearch(args.searchTerm, args.objectType)
-    },
-  }),
-
-  defineTool({
     name: "bw_adso_transformations",
     description:
       "Get Transformations related to an ADSO (via name search). Each TRFN title carries a 'SOURCE -> TARGET' relation.",

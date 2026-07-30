@@ -123,6 +123,7 @@ export const reportingTools = [
       ...pagingFields,
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       const view = await client.updateReportingView(args.provider, args.state, {
         fromRow: args.fromRow,

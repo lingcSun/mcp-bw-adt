@@ -5,19 +5,15 @@ import { defineTool, outputPathField } from "../tool"
 export const infoobjectTools = [
   defineTool({
     name: "bw_infoobject_get",
-    description: "Get InfoObject details. Prefer outputPath.",
+    description:
+      "Get InfoObject details including metadata. Prefer outputPath.",
     params: z.object({ name: z.string(), outputPath: outputPathField }),
     async run(client, args) {
-      return client.getInfoObject(args.name)
-    },
-  }),
-
-  defineTool({
-    name: "bw_infoobject_metadata",
-    description: "Get InfoObject metadata. Prefer outputPath.",
-    params: z.object({ name: z.string(), outputPath: outputPathField }),
-    async run(client, args) {
-      return client.getInfoObjectMetadata(args.name)
+      const [details, metadata] = await Promise.all([
+        client.getInfoObject(args.name),
+        client.getInfoObjectMetadata(args.name).catch(() => undefined),
+      ])
+      return { details, metadata }
     },
   }),
 

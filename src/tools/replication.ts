@@ -45,6 +45,7 @@ export const replicationTools = [
       background: z.boolean().optional(),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       const { sourceSystem, datasource, outputPath: _outputPath, ...opts } = args
       // io-ts' OutputOf marks these keys required (value|undefined); explicitly
@@ -73,6 +74,7 @@ export const replicationTools = [
       background: z.boolean().optional(),
       outputPath: outputPathField,
     }),
+    mutating: true,
     async run(client, args) {
       const { sourceSystem, datasource, outputPath: _outputPath, ...opts } = args
       return client.replicateDataSourceFull(sourceSystem, datasource, opts)

@@ -1,61 +1,40 @@
 /**
  * DDIC table & ADSO data tools.
  *
- * Table data is the biggest payload class (measured: 100 rows x 20 cols ≈ 68 KB,
- * maxRows=10000 ≈ 6.7 MB). So these tools:
- *   - default maxRows to a small number and cap it,
- *   - paginate the result when returned inline,
- *   - strongly favor outputPath for anything sizeable.
+ * Table data is the biggest payload class. Prefer outputPath for anything sizeable.
+ * Use bw_table_describe for a merged metadata/info/fields/data-metadata snapshot.
  */
 import { z } from "zod"
 import { defineTool, largeInput, outputPathField } from "../tool"
 import { paginateUnlessBuffered, TABLE_ROW_DEFAULT } from "../response"
+import { isAdtError } from "bw-adt-api"
 
 export const ddicTools = [
   defineTool({
-    name: "bw_table_metadata",
+    name: "bw_table_describe",
     description:
-      "Get DDIC table metadata (blueSource format): responsible, language, package, links.",
+      "Describe a DDIC table in one call: merges metadata, info, fields, and data-preview " +
+      "metadata. Prefer outputPath when you need the full snapshot.",
     params: z.object({
       table: z.string().describe("DDIC table name."),
       outputPath: outputPathField,
     }),
     async run(client, args) {
-      return client.getDDICTableMetadata(args.table)
-    },
-  }),
-
-  defineTool({
-    name: "bw_table_info",
-    description:
-      "Get DDIC table info: fields (name, key, type, length, decimals), description, delivery class.",
-    params: z.object({
-      table: z.string().describe("DDIC table name."),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      return client.getDDICTableInfo(args.table)
-    },
-  }),
-
-  defineTool({
-    name: "bw_table_fields",
-    description: "Get the field list of a DDIC table (parsed from table source).",
-    params: z.object({ table: z.string().describe("DDIC table name.") }),
-    async run(client, args) {
-      return client.getDDICTableFields(args.table)
-    },
-  }),
-
-  defineTool({
-    name: "bw_table_data_metadata",
-    description: "Get data-preview metadata for a DDIC table (column list, etc.).",
-    params: z.object({
-      table: z.string().describe("DDIC table name."),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      return client.getDDICTableDataMetadata(args.table)
+      const facade = (
+        client as {
+          ddic?: { describe?: (table: string) => Promise<unknown> }
+        }
+      ).ddic
+      if (facade?.describe) {
+        return facade.describe(args.table)
+      }
+      const [metadata, info, fields, dataMetadata] = await Promise.all([
+        client.getDDICTableMetadata(args.table).catch(() => undefined),
+        client.getDDICTableInfo(args.table).catch(() => undefined),
+        client.getDDICTableFields(args.table).catch(() => undefined),
+        client.getDDICTableDataMetadata(args.table).catch(() => undefined),
+      ])
+      return { metadata, info, fields, dataMetadata }
     },
   }),
 
@@ -92,16 +71,46 @@ export const ddicTools = [
       outputPath: outputPathField,
     }),
     async run(client, args) {
-      const result = await client.getDDICTableData(args.table, {
+      const opts = {
         maxRows: args.maxRows ?? TABLE_ROW_DEFAULT,
         columns: args.columns,
         whereClause: args.whereClause,
         orderBy: args.orderBy,
-      })
-      return paginateUnlessBuffered(
+      }
+
+      let result
+      let fallbackUsed = false
+      let droppedColumns: string[] | undefined
+      try {
+        result = await client.getDDICTableData(args.table, opts)
+      } catch (err) {
+        // SAP's data-preview rejects certain columns from an explicit field list
+        // with HTTP 400. Retry with SELECT * + client-side projection.
+        if (args.columns && args.columns.length > 0 && isColumnListRejection(err)) {
+          fallbackUsed = true
+          result = await client.getDDICTableData(args.table, {
+            ...opts,
+            columns: undefined,
+            selectStar: true,
+          })
+          const projected = projectColumns(result, args.columns)
+          result = projected.result
+          droppedColumns = projected.droppedColumns
+        } else {
+          throw err
+        }
+      }
+
+      const shaped = paginateUnlessBuffered(
         { ...result, tableName: result.tableName },
         args.outputPath
       )
+      if (fallbackUsed && shaped._meta) {
+        shaped._meta.fallback =
+          "columns-rejected-by-server; retried with literal SELECT * and projected client-side"
+        shaped._meta.droppedColumns = droppedColumns
+      }
+      return shaped
     },
   }),
 
@@ -163,22 +172,46 @@ export const ddicTools = [
       return paginateUnlessBuffered(result, args.outputPath)
     },
   }),
-
-  defineTool({
-    name: "bw_adso_ddic_links",
-    description: "Get DDIC table link / data-preview link for an ADSO (from response headers).",
-    params: z.object({ adsoId: z.string() }),
-    async run(client, args) {
-      return client.getADSODDICLinks(args.adsoId)
-    },
-  }),
-
-  defineTool({
-    name: "bw_adso_ddic_table_name",
-    description: "Resolve the underlying DDIC table name for an ADSO.",
-    params: z.object({ adsoId: z.string() }),
-    async run(client, args) {
-      return { ddicTableName: await client.getADSODDICTableName(args.adsoId) }
-    },
-  }),
 ]
+
+// ---------------------------------------------------------------------------
+// Helpers: detect SAP's column-list rejections and project client-side.
+// ---------------------------------------------------------------------------
+
+function isColumnListRejection(err: unknown): boolean {
+  if (!isAdtError(err)) return false
+  const e = err as unknown as {
+    err?: number
+    message?: string
+    localizedMessage?: string
+  }
+  if (e.err !== 400) return false
+  const msg = `${e.localizedMessage || ""} ${e.message || ""}`
+  return /unknown column|cannot specify a field list|field list/i.test(msg)
+}
+
+function projectColumns(
+  result: {
+    tableName: string
+    totalRows?: number
+    rows?: Record<string, unknown>[]
+    columns?: string[]
+  },
+  requested: string[]
+): { result: typeof result; droppedColumns: string[] | undefined } {
+  const available = new Set((result.columns || []).map((c) => c.toUpperCase()))
+  const keep = requested.filter((c) => available.has(c.toUpperCase()))
+  const dropped = requested.filter((c) => !available.has(c.toUpperCase()))
+  const rows = (result.rows || []).map((row) => {
+    const out: Record<string, unknown> = {}
+    for (const c of keep) {
+      const key = Object.keys(row).find((k) => k.toUpperCase() === c.toUpperCase())
+      if (key) out[key] = row[key]
+    }
+    return out
+  })
+  return {
+    result: { ...result, columns: keep, rows },
+    droppedColumns: dropped.length > 0 ? dropped : undefined,
+  }
+}

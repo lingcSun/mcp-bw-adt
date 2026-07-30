@@ -88,31 +88,12 @@ export const systemTools = [
   defineTool({
     name: "bw_system_info",
     description:
-      "Query BW system info and capabilities for the current environment (auto-logs in on first call). Use outputPath for the full document.",
+      "Query BW system info and capabilities for the current environment (auto-logs in on first call). " +
+      "Use outputPath for the full document. For a single property or capability check, read the " +
+      "returned document (or buffered file) rather than separate tools.",
     params: z.object({ outputPath: outputPathField }),
     async run(client) {
       return client.systemInfo()
-    },
-  }),
-
-  defineTool({
-    name: "bw_system_get_property",
-    description: "Get a single named BW system property from the current environment.",
-    params: z.object({ name: z.string().describe("System property name.") }),
-    async run(client, args) {
-      return client.getSystemProperty(args.name)
-    },
-  }),
-
-  defineTool({
-    name: "bw_system_has_capability",
-    description:
-      "Check whether the current BW environment supports a named capability.",
-    params: z.object({
-      capability: z.string().describe("Capability name to check."),
-    }),
-    async run(client, args) {
-      return client.hasCapability(args.capability)
     },
   }),
 
