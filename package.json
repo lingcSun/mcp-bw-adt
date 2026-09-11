@@ -33,7 +33,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "bw-adt-api": "file:../bw-adt-api",
+    "bw-adt-api": "^0.2.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.5"
   },
