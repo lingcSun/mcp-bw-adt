@@ -169,8 +169,9 @@ schemas. Domains:
 | Dataflow / lineage | `bw_dataflow_*` | `bw_dataflow_get`, `bw_dataflow_lineage` |
 | Generic CRUD | `bw_object_*` | `bw_object_create/update/delete/activate` |
 | ADSO | `bw_adso_*` | `bw_adso_get_xml`, `bw_adso_save_and_activate`, `bw_adso_add_field` |
-| Transformation | `bw_trfn_*` | `bw_trfn_save_and_activate`, `bw_trfn_add_rules_and_save`, `bw_trfn_auto_map_and_save` |
-| DTP | `bw_dtp_*` | `bw_dtp_execute`, `bw_dtp_save_and_activate` |
+| InfoArea | `bw_area_*` | `bw_area_create`, `bw_area_get_xml`, `bw_area_validate_exists` |
+| Transformation | `bw_trfn_*` | `bw_trfn_create`, `bw_trfn_save_and_activate`, `bw_trfn_add_rules_and_save`, `bw_trfn_auto_map_and_save` |
+| DTP | `bw_dtp_*` | `bw_dtp_create`, `bw_dtp_execute`, `bw_dtp_save_and_activate` |
 | DataSource | `bw_datasource_*` | `bw_datasource_save_and_activate`, `bw_datasource_merge_proposal` |
 | Replication | `bw_replication_*` | `bw_replication_replicate_full` |
 | Process Chain | `bw_processchain_*` | `bw_processchain_execute`, `bw_processchain_logs` |

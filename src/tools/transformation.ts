@@ -1,8 +1,8 @@
 /**
  * Transformation (TRFN) tools.
  *
- * Note: TRFN creation is unsupported server-side. Read/update/activate via save_and_activate
- * and atomic helpers. Workflow: get_xml (outputPath) → edit → save_and_activate (xmlPath).
+ * Workflow: bw_trfn_create (8TRANSIENT transient flow) → get_xml (outputPath) →
+ * edit → save_and_activate (xmlPath).
  */
 import { z } from "zod"
 import { defineTool, largeInput, outputPathField, readLargeInput } from "../tool"
@@ -15,6 +15,43 @@ const CLASS_VERSION = z
   .describe("Which class variant to read.")
 
 export const transformationTools = [
+  defineTool({
+    name: "bw_trfn_create",
+    description:
+      "Create a transformation via the 8TRANSIENT transient flow (Eclipse wizard equivalent). " +
+      "Server mints the id, hydrates all source/target elements and default rules from the two " +
+      "providers. Returns trfnId + hydrated XML. packageName defaults to $TMP; pass a real " +
+      "package together with transport to register in a workbench request. " +
+      "Then use bw_trfn_auto_map_and_save / bw_trfn_add_rules_and_save / bw_trfn_check to finish.",
+    params: z.object({
+      sourceName: z.string().describe("Source object name (e.g. staging ADSO)."),
+      targetName: z.string().describe("Target object name."),
+      sourceType: z.string().optional().describe("Source tlogo type, default ADSO."),
+      targetType: z.string().optional().describe("Target tlogo type, default ADSO."),
+      packageName: z
+        .string()
+        .optional()
+        .describe("Target package, default $TMP. Non-$TMP requires transport."),
+      transport: z.string().optional().describe("Workbench request number."),
+      description: z.string().optional().describe("Description (set on a follow-up save)."),
+      responsible: z.string().optional().describe("Responsible user, defaults to login user."),
+      masterSystem: z.string().optional().describe("Master system, default BPD."),
+      outputPath: outputPathField,
+    }),
+    mutating: true,
+    async run(client, args) {
+      const { outputPath, sourceName, targetName, sourceType, targetType, ...opts } = args
+      const res = await client.createTransformation({
+        ...opts,
+        sourceObjName: sourceName,
+        targetObjName: targetName,
+        sourceObjType: sourceType,
+        targetObjType: targetType,
+      })
+      return shapeXmlResult(res.xml, { trfnId: res.trfnId, created: true }, args)
+    },
+  }),
+
   defineTool({
     name: "bw_trfn_details",
     description: "Get parsed transformation details. Prefer outputPath.",

@@ -133,7 +133,8 @@ export const adsoTools = [
   defineTool({
     name: "bw_adso_add_field",
     description:
-      "Atomic edit: add a local 'field'-type field to an ADSO and save+activate. " +
+      "Atomic edit: add a local 'field'-type field to an ADSO and save (activate optional via autoActivate, default true). " +
+      "success reflects save/activate outcome; activated only means activation was attempted. " +
       "Internally reads current XML, inserts the field, and saves — no large XML handling by the caller.",
     params: z.object({
       id: z.string(),
@@ -197,7 +198,9 @@ export const adsoTools = [
 
   defineTool({
     name: "bw_adso_validate_info_area",
-    description: "Validate that an InfoArea exists (pre-create check).",
+    description:
+      "Validate that an InfoArea exists (pre-create check for ADSO). " +
+      "Prefer bw_area_validate_exists for InfoArea workflows.",
     params: z.object({ name: z.string() }),
     async run(client, args) {
       return client.validateInfoArea(args.name)

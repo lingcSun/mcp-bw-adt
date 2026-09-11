@@ -1,6 +1,6 @@
 {
   "name": "mcp-bw-adt-api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server exposing SAP BW/4HANA ADT (bw-adt-api) operations to LLM clients, with local-file buffering for large XML payloads and table data.",
   "type": "commonjs",
   "main": "build/index.js",
@@ -23,6 +23,14 @@
     "Business Warehouse"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lingcSun/mcp-bw-adt-api.git"
+  },
+  "files": [
+    "build",
+    "README.md"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "bw-adt-api": "file:../bw-adt-api",

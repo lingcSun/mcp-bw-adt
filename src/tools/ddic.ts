@@ -115,30 +115,6 @@ export const ddicTools = [
   }),
 
   defineTool({
-    name: "bw_adso_data_preview",
-    description:
-      "Preview data of the active table behind an ADSO. Same sizing guidance as bw_table_get_data — prefer outputPath for anything non-trivial.",
-    params: z.object({
-      adsoName: z.string().describe("ADSO technical name."),
-      maxRows: z
-        .number()
-        .int()
-        .positive()
-        .max(100000)
-        .optional()
-        .describe(`Max rows to fetch (default ${TABLE_ROW_DEFAULT}).`),
-      outputPath: outputPathField,
-    }),
-    async run(client, args) {
-      const result = await client.getADSODataPreview(
-        args.adsoName,
-        args.maxRows ?? TABLE_ROW_DEFAULT
-      )
-      return paginateUnlessBuffered(result, args.outputPath)
-    },
-  }),
-
-  defineTool({
     name: "bw_table_query_sql",
     description:
       "Run an arbitrary OpenSQL statement via ADT Data Preview freestyle " +

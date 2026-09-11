@@ -4,6 +4,7 @@ import { searchTools } from "./search"
 import { dataflowTools } from "./dataflow"
 import { genericTools } from "./generic"
 import { adsoTools } from "./adso"
+import { areaTools } from "./area"
 import { transformationTools } from "./transformation"
 import { dtpTools } from "./dtp"
 import { datasourceTools } from "./datasource"
@@ -20,6 +21,7 @@ export const ALL_TOOLS = [
   ...dataflowTools,
   ...genericTools,
   ...adsoTools,
+  ...areaTools,
   ...transformationTools,
   ...dtpTools,
   ...datasourceTools,

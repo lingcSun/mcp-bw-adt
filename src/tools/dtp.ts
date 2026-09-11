@@ -9,6 +9,37 @@ import { shapeSaveResult, shapeXmlResult } from "../response"
 
 export const dtpTools = [
   defineTool({
+    name: "bw_dtp_create",
+    description:
+      "Create a DTP via the generic object POST flow (CREA lock + collection POST). " +
+      "Body is minimal (extractionSettings + overview TRFN binding + source/target); the server " +
+      "hydrates filter fields and program flow. Created DTP is inactive — configure " +
+      "(extractionMode/filter via get_xml → edit → save_and_activate) then activate. " +
+      "Note: DTP filters cannot express empty-value comparisons; encode them as selections " +
+      "without a <low> element (<selection operator=\"NotEqual\"/> = not-initial).",
+    params: z.object({
+      sourceName: z.string().describe("Source ADSO name."),
+      targetName: z.string().describe("Target ADSO name."),
+      transformId: z.string().describe("Bound transformation (TRFN) id."),
+      id: z
+        .string()
+        .optional()
+        .describe("DTP id; omit to auto-generate (DTP_ET0916OM0D + 16 random chars)."),
+      extractionMode: z.enum(["F", "D"]).optional().describe("F=full (default), D=delta."),
+      packageName: z.string().optional().describe("Target package, default $TMP."),
+      transport: z.string().optional().describe("Workbench request number."),
+      description: z.string().optional(),
+      outputPath: outputPathField,
+    }),
+    mutating: true,
+    async run(client, args) {
+      const { outputPath, ...opts } = args
+      const res = await client.createDTP(opts)
+      return shapeXmlResult(res.xml, { dtpId: res.dtpId, created: true }, args)
+    },
+  }),
+
+  defineTool({
     name: "bw_dtp_details",
     description:
       "Get parsed-and-projected DTP details (fields, filter, program flow extracted from the XML tree). Prefer outputPath.",
@@ -58,10 +89,24 @@ export const dtpTools = [
 
   defineTool({
     name: "bw_dtp_check",
-    description: "Check DTP consistency.",
+    description:
+      "Check DTP consistency (READ-ONLY, does NOT activate). Use bw_dtp_activate to (re)activate a DTP.",
     params: z.object({ id: z.string() }),
     async run(client, args) {
       return client.checkDTP(args.id)
+    },
+  }),
+
+  defineTool({
+    name: "bw_dtp_activate",
+    description:
+      "Activate a DTP — typically to re-activate a DTP that a transformation change deactivated. " +
+      "Locks → activates → unlocks; the DTP content is NOT changed. " +
+      "Use bw_dtp_save_and_activate only when the DTP XML was actually modified.",
+    params: z.object({ id: z.string() }),
+    mutating: true,
+    async run(client, args) {
+      return client.activateDTPWithLock(args.id)
     },
   }),
 

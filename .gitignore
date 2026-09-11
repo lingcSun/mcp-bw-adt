@@ -3,3 +3,5 @@ build/
 .mcp-bw-out/
 *.log
 .env
+.zcode/
+.claude/

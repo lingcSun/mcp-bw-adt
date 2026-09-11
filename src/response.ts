@@ -81,16 +81,31 @@ export function summarizeTable(result: TableResult): string {
   return `${result.tableName}: ${rows} row(s) returned (${total} total), ${cols} column(s).`
 }
 
-/** Project a save/activate raw result into a compact LLM-facing object. */
+/** Read `.success` from an ActivationResult-like object, if present. */
+function nestedSuccess(value: unknown): boolean | undefined {
+  if (value && typeof value === "object" && "success" in value) {
+    return Boolean((value as { success: unknown }).success)
+  }
+  return undefined
+}
+
+/**
+ * Project a save/activate raw result into a compact LLM-facing object.
+ *
+ * Raw shape: `{ lockHandle, transport, updateResult, activated, activateResult?, … }`.
+ * - `activated` = whether activation was *attempted* (autoActivate), not overall success.
+ * - `success` = update ok, and activate ok when attempted. Hard ADT failures throw upstream.
+ */
 export function projectSaveResult(
   raw: Record<string, unknown>
 ): Record<string, unknown> {
-  // save_and_activate_* methods return { lockHandle, transport, updateResult,
-  // activated, activateResult } (and a few return className/classResult/trfnResult).
-  // success follows `activated` when present; otherwise the call succeeded (ADT throws on hard failure).
-  const out: Record<string, unknown> = {
-    success: raw.activated === undefined ? true : Boolean(raw.activated),
-  }
+  const updateOk = nestedSuccess(raw.updateResult)
+  const activateOk = raw.activated ? nestedSuccess(raw.activateResult) : undefined
+  const success =
+    (updateOk === undefined || updateOk) &&
+    (activateOk === undefined || activateOk)
+
+  const out: Record<string, unknown> = { success }
   for (const key of [
     "activated",
     "activateResult",
