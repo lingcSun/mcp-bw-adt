@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lingcSun/mcp-bw-adt-api.git"
+    "url": "git+https://github.com/lingcSun/mcp-bw-adt-api.git"
   },
   "files": [
     "build",
