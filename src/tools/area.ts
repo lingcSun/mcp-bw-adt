@@ -138,7 +138,7 @@ export const areaTools = [
       }
       const obj = await client.getObject("area", args.name)
       const lock = await obj.lock()
-      await obj.delete(lock.lockHandle)
+      await obj.delete({ lockHandle: lock.lockHandle })
       return { ok: true, name: args.name, deleted: true }
     },
   }),

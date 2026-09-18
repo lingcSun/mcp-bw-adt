@@ -168,10 +168,19 @@ export const adsoTools = [
   defineTool({
     name: "bw_adso_create",
     description:
-      "Create an empty ADSO shell (fields are added afterwards via bw_adso_add_field). " +
-      "Required: name, description, infoArea.",
+      "Create an empty ADSO shell (fields are added afterwards via bw_adso_add_field, or by " +
+      "editing the XML from bw_adso_get_xml). Required: name, description, infoArea. " +
+      "Pass packageName (e.g. \"ZBW\") TOGETHER WITH transport=<TRKORR> to create the object " +
+      "in a real package and register it in that workbench request; omitting transport makes " +
+      "the object local to $TMP and it will NOT appear in E071.",
     params: z.object({
-      name: z.string(),
+      name: z
+        .string()
+        .describe(
+          "ADSO technical name. 3-9 characters, excluding any /namespace/ prefix " +
+            "(e.g. /CPMB/A2IA1MG is valid: its last segment is 8 chars). " +
+            "InfoArea names have no such limit. Server-side validation rejects violations."
+        ),
       description: z.string(),
       infoArea: z.string(),
       masterLanguage: z.string().optional().describe("Default EN."),
@@ -187,6 +196,20 @@ export const adsoTools = [
       writeChangelog: z.boolean().optional(),
       readOnly: z.boolean().optional(),
       autoActivate: z.boolean().optional().describe("Default false."),
+      packageName: z
+        .string()
+        .optional()
+        .describe(
+          "Target development package. Default $TMP (local object). " +
+            "Requires transport to actually take effect."
+        ),
+      transport: z
+        .string()
+        .optional()
+        .describe(
+          "Workbench request number. When set, the object is created in packageName and " +
+            "recorded in this request (corrNr). Without it the object lands in $TMP."
+        ),
       outputPath: outputPathField,
     }),
     mutating: true,
