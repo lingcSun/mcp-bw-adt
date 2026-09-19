@@ -16,6 +16,7 @@ Status: implemented
 
 ## Consequences
 
+- agent 语料回归与代码回归同门进出：CI 矩阵每个组合执行 build、list-tools 与门禁。
 - 根文件预算成为硬约束：扩充走"搬家 → 压缩 → 改预算并在提交说明给理由"的次序。
 - 归档新增一步 `npm run verify:agents -- --write`；回改已封存文件即门禁失败。
 - 四仓库门禁同源：后续门禁修复须同步四处。
