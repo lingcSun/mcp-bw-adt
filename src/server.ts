@@ -121,10 +121,12 @@ function ok(data: unknown): CallToolResult {
     content: [
       {
         type: "text",
+        // JSON.stringify(undefined) is undefined → content[0].text would be
+        // missing and the MCP result fails schema validation. Fall back to "ok".
         text:
           typeof data === "string"
             ? data
-            : JSON.stringify(data, null, 2),
+            : JSON.stringify(data, null, 2) ?? "ok",
       },
     ],
     isError: false,
