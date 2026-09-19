@@ -45,7 +45,7 @@ export function visibleTools(): ToolDef<any>[] {
 }
 
 const SERVER_NAME = "mcp-bw-adt-api"
-const SERVER_VERSION = "0.1.0"
+const SERVER_VERSION = "0.4.0"
 
 export function createServer(): Server {
   const server = new Server(

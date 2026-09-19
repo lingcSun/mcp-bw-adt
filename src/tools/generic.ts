@@ -14,9 +14,10 @@ export const genericTools = [
     name: "bw_object_delete",
     description:
       "Delete any BW object. Irreversible. " +
-      "Which argument is required depends on objectType: ADSO and InfoArea (area) need " +
-      "lockHandle (obtain it from a prior lock — bw_dtp_activate-style lock is not enough, " +
-      "lock the ADSO itself); trfn / dtpa / pc / iobj need transport. " +
+      "ADSO and InfoArea (area): pass a lockHandle if you already hold one; otherwise the tool " +
+      "locks the object itself first (the atomic lock tools were removed from the Public surface, " +
+      "so self-locking is the default path). trfn / dtpa / pc / iobj need transport " +
+      "(a workbench REQUEST number, not a task number). " +
       "For ADSO you may also pass transport so it is sent as corrNr.",
     params: z.object({
       objectType: OBJECT_TYPE,
@@ -24,7 +25,10 @@ export const genericTools = [
       lockHandle: z
         .string()
         .optional()
-        .describe("Required for objectType=adso / area: the lock handle from a prior lock call."),
+        .describe(
+          "Optional for objectType=adso / area: a lock handle from a prior lock call. " +
+            "When omitted, the tool locks the object itself."
+        ),
       transport: z
         .string()
         .optional()
@@ -35,6 +39,16 @@ export const genericTools = [
     }),
     mutating: true,
     async run(client, args) {
+      const needsSelfLock =
+        (args.objectType === "adso" || args.objectType === "area") &&
+        args.lockHandle === undefined
+      if (needsSelfLock) {
+        // MCP Public 面没有原子 lock 工具，adso/area 删除在此内部加锁；
+        // BWObject.delete 的 lockHandle 模式自带 unlock（失败可忽略）。
+        const obj = await client.getObject(args.objectType, args.objectName)
+        const lock = await obj.lock()
+        return obj.delete({ lockHandle: lock.lockHandle, transport: args.transport })
+      }
       const options: { lockHandle?: string; transport?: string } = {}
       if (args.lockHandle !== undefined) options.lockHandle = args.lockHandle
       if (args.transport !== undefined) options.transport = args.transport

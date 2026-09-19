@@ -208,20 +208,24 @@ export const transformationTools = [
   defineTool({
     name: "bw_trfn_switch_runtime",
     description:
-      "Switch a transformation between HANA and ABAP runtime. Requires an existing lockHandle.",
+      "Switch a transformation between HANA and ABAP runtime and save+activate " +
+      "(one-stop: lock → PUT → activate → unlock; the lock lifecycle is handled internally). " +
+      "Note: switching to ABAP runtime is a prerequisite for start/end/expert routines. " +
+      "When a transport is required: pass transport=<TRKORR> OR createTransport=true.",
     params: z.object({
       id: z.string(),
       useHana: z.boolean().describe("true → HANA runtime, false → ABAP runtime."),
-      lockHandle: z.string().describe("Required lock handle for the transformation."),
-      version: VERSION.optional(),
-      corrNr: z.string().optional(),
-      timestamp: z.string().optional(),
+      transport: z.string().optional(),
+      createTransport: z.boolean().optional(),
+      transportDescription: z.string().optional(),
+      autoActivate: z.boolean().optional(),
       outputPath: outputPathField,
     }),
     mutating: true,
     async run(client, args) {
-      const { id, useHana, lockHandle, outputPath: _outputPath, ...opts } = args
-      return client.switchTransformationRuntime(id, useHana, lockHandle, opts)
+      const { id, useHana, outputPath, ...opts } = args
+      const raw = await client.switchRuntimeAndSave(id, useHana, opts)
+      return shapeSaveResult(raw as unknown as Record<string, unknown>, outputPath)
     },
   }),
 

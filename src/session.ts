@@ -204,10 +204,19 @@ export function switchProfile(name: string): ProfileInfo {
       `Unknown environment "${name}". Configured: ${[...map.keys()].join(", ")}`
     )
   }
-  const prevReadOnly = currentName
-    ? map.get(currentName)?.readOnly
-    : undefined
+  const prevName = currentName
+  const prevReadOnly = prevName ? map.get(prevName)?.readOnly : undefined
   currentName = name
+  // 释放上一个 profile 的服务端会话（best-effort logout），避免频繁切换在 BW 侧
+  // 积累挂起的 stateful 会话（服务端有会话数上限）。切回时 getClient 重建客户端，
+  // 首个请求自动重新登录。
+  if (prevName && prevName !== name) {
+    const prevClient = clients.get(prevName)
+    if (prevClient) {
+      clients.delete(prevName)
+      void prevClient.logout().catch(() => {})
+    }
+  }
   // Mutating-tool visibility changes with readOnly — notify MCP clients.
   if (prevReadOnly !== cfg.readOnly) {
     void notifyToolListChanged()
