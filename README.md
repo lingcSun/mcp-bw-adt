@@ -7,7 +7,7 @@ MCP-compatible client.
 
 It exposes a **Public** subset of `BWAdtClient` domain operations (ADSO, Transformation, DTP,
 DataSource, Process Chain, InfoObject, DDIC, search, dataflow, transports, …) as MCP tools —
-about **64 tools** after Public-surface consolidation — with a **local-file buffering layer**
+**71 tools** after Public-surface consolidation — with a **local-file buffering layer**
 that keeps large XML payloads and table data out of the LLM context window.
 
 > **BREAKING (Public surface):** Atomic `lock` / `unlock` / bare `update` / bare `activate`,
@@ -165,7 +165,7 @@ schemas. Domains:
 | Domain | Prefix | Example tools |
 |---|---|---|
 | System / env | `bw_system_*`, `bw_env_*`, `bw_disconnect` | `bw_env_list`, `bw_env_switch`, `bw_system_status` |
-| Search | `bw_search_*`, `bw_quick_search` | `bw_search_objects`, `bw_quick_search` |
+| Search | `bw_search_*` | `bw_search_objects`, `bw_adso_transformations` |
 | Dataflow / lineage | `bw_dataflow_*` | `bw_dataflow_get`, `bw_dataflow_lineage` |
 | Generic CRUD | `bw_object_*` | `bw_object_create/update/delete/activate` |
 | ADSO | `bw_adso_*` | `bw_adso_get_xml`, `bw_adso_save_and_activate`, `bw_adso_add_field` |
@@ -180,8 +180,9 @@ schemas. Domains:
 | BICS reporting / preview | `bw_reporting_*` | `bw_reporting_preview`, `bw_reporting_initial_view` |
 | Transport / CTS | `bw_transport_*` | `bw_transport_check`, `bw_transport_create` |
 
-> Note: Transformation **creation** is unsupported server-side (SAP JCo limitation) and
-> `bw_object_create` with `objectType: "trfn"` returns an error. All other TRFN operations work.
+> Note: Transformation **creation** must go through `bw_trfn_create` (the 8TRANSIENT transient
+> flow, equivalent to the Eclipse wizard). The generic `bw_object_create` tool was removed from
+> the Public surface, and the generic POST flow is rejected by the SAP server for TRFN anyway.
 
 ---
 
@@ -248,8 +249,10 @@ npm start          # run the server (stdio)
 npm run list-tools # dump the tool catalog as JSON
 ```
 
-The server depends on `bw-adt-api` via a local `file:` link during development. Once published,
-switch the dependency to `"bw-adt-api": "^0.1.0"`.
+The server depends on the published [`bw-adt-api`](https://www.npmjs.com/package/bw-adt-api)
+npm package (`"bw-adt-api": "^0.4.0"`). For local cross-repo development, point it at a
+sibling checkout instead (e.g. `npm link ../bw-adt-api` or a `file:` spec) and switch back
+before publishing.
 
 ## License
 
