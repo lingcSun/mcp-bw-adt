@@ -26,8 +26,8 @@ npm run list-tools  # 打印工具目录 JSON（无需真实 BW 连接即可核�
 - **大字节不经过 LLM 上下文**：大输入走文件路径（机制 A），大输出走 outputPath 落盘（机制 B）；一切路径限定在 workdir 沙箱内（[rationale](.agents/notes/implemented/feature/2026-09-18-local-file-buffering.md)）。
 - **变更工具必须标注 `mutating: true`**：只读 profile 守卫从该元数据派生，漏标即漏守卫；工具面是策划的 Public 子集，不自动镜像库 API（[rationale](.agents/notes/implemented/architecture/2026-09-18-tool-groups-and-derived-mutating-set.md)）。
 
-根文件保持克制：细节链接到权威出处，超长先搬家再压缩。
+本文件预算 ≤ 2000 字符（按字符计，中英文同口径）。超出先搬家（挪到笔记或 README）、再压缩；确需更多才改这个数字，并在提交说明里给理由。
 
 ## Agent Notes
 
-非平凡变更必须在同一提交新增或更新至少一篇 Agent Note（[规则](.agents/notes/README.md#何时必须写)）；每篇新笔记触发 supersession 检查。决策语料在 [.agents/notes/](.agents/notes/AGENTS.md)。写行为断言（文档、注释、笔记）时用 [test-dont-assume](.agents/skills/test-dont-assume/SKILL.md) 技能。
+非平凡变更必须在同一提交新增或更新至少一篇 Agent Note（[规则](.agents/notes/README.md#何时必须写)）；每篇新笔记触发 supersession 检查。决策语料在 [.agents/notes/](.agents/notes/AGENTS.md)。写行为断言（文档、注释、笔记）时用 [test-dont-assume](.agents/skills/test-dont-assume/SKILL.md) 技能。门禁 `npm run verify:agents` 校验根文件预算、笔记格式与链接。
