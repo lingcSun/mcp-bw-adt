@@ -1,6 +1,6 @@
 # mcp-bw-adt — Agent Instructions
 
-MCP 服务器，封装 [`bw-adt-api`](../bw-adt-api)，向 LLM 客户端（ZCode、Claude Desktop 等）暴露 SAP BW/4HANA ADT 操作：Public 面约 64 个工具，带大 XML/表数据的本地文件缓冲层。
+MCP 服务器，封装 npm 包 `bw-adt-api`，向 LLM 客户端（ZCode、Claude Desktop 等）暴露 SAP BW/4HANA ADT 操作：Public 面约 64 个工具，带大 XML/表数据的本地文件缓冲层。
 
 ## Commands
 
@@ -8,15 +8,15 @@ MCP 服务器，封装 [`bw-adt-api`](../bw-adt-api)，向 LLM 客户端（ZCode
 npm run build       # tsc → build/
 npm run watch       # tsc -w
 npm run start       # 运行编译产物（stdio 传输）
-npm run list-tools  # 打印工具目录 JSON（无需真实 BW 连接即可核对注册）
+npm run list-tools  # 打印工具目录 JSON（无需 BW 连接）
 ```
 
 ## Layout
 
-- `src/index.ts` stdio 启动（`--list-tools` 模式）；`src/server.ts` MCP 装配、调用路由与 `outputPath` 拦截（缓冲机制 B）
+- `src/index.ts` stdio 启动；`src/server.ts` MCP 装配、调用路由与 `outputPath` 拦截（缓冲机制 B）
 - `src/tools/*.ts` 工具组（`ToolDef[]`，`mutating: true` 标注）；`tools/index.ts` 聚合 `ALL_TOOLS`
 - `src/mutating.ts` 从元数据派生变更工具集合（供只读 profile 守卫）
-- `src/session.ts` 多 profile `BWAdtClient` 管理（`BW_PROFILES`/`BW_DEFAULT`；凭据不进入 LLM 可见面）
+- `src/session.ts` 多 profile `BWAdtClient` 管理（`BW_PROFILES`/`BW_DEFAULT`）
 - `src/fileio.ts` 本地文件缓冲（workdir 沙箱：`BW_MCP_WORKDIR` 或 `.mcp-bw-out`）
 - `src/response.ts` / `src/errors.ts` / `src/tool.ts` 结果封装、错误映射、ToolDef→JSON Schema
 - `src/adsoProfiles.ts` ADSO 类型语义层（类型→属性包 + D1/D7/D8 约束）
