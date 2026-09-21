@@ -7,7 +7,7 @@ MCP-compatible client.
 
 It exposes a **Public** subset of `BWAdtClient` domain operations (ADSO, Transformation, DTP,
 DataSource, Process Chain, InfoObject, DDIC, search, dataflow, transports, …) as MCP tools —
-**71 tools** after Public-surface consolidation — with a **local-file buffering layer**
+**75 tools** after Public-surface consolidation — with a **local-file buffering layer**
 that keeps large XML payloads and table data out of the LLM context window.
 
 > **BREAKING (Public surface):** Atomic `lock` / `unlock` / bare `update` / bare `activate`,

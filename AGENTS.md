@@ -1,6 +1,6 @@
 # mcp-bw-adt — Agent Instructions
 
-MCP 服务器，封装 npm 包 `bw-adt-api`，向 LLM 客户端（ZCode、Claude Desktop 等）暴露 SAP BW/4HANA ADT 操作：Public 面约 64 个工具，带大 XML/表数据的本地文件缓冲层。
+MCP 服务器，封装 npm 包 `bw-adt-api`，向 LLM 客户端（ZCode、Claude Desktop 等）暴露 SAP BW/4HANA ADT 操作：Public 面 75 个工具，带大 XML/表数据的本地文件缓冲层。
 
 ## Commands
 
