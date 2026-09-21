@@ -12,7 +12,8 @@
     "watch": "tsc -w",
     "start": "node build/index.js",
     "list-tools": "node build/index.js --list-tools",
-    "verify:agents": "node scripts/verify-agents.mjs"
+    "verify:agents": "node scripts/verify-agents.mjs",
+    "smoke:profiles": "node scripts/smoke-adso-profiles.cjs"
   },
   "keywords": [
     "mcp",
@@ -34,7 +35,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "bw-adt-api": "^0.4.0",
+    "bw-adt-api": "file:../bw-adt-api",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.5"
   },

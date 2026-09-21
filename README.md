@@ -168,7 +168,7 @@ schemas. Domains:
 | Search | `bw_search_*` | `bw_search_objects`, `bw_adso_transformations` |
 | Dataflow / lineage | `bw_dataflow_*` | `bw_dataflow_get`, `bw_dataflow_lineage` |
 | Generic CRUD | `bw_object_*` | `bw_object_create/update/delete/activate` |
-| ADSO | `bw_adso_*` | `bw_adso_get_xml`, `bw_adso_save_and_activate`, `bw_adso_add_field` |
+| ADSO | `bw_adso_*` | `bw_adso_get_xml`, `bw_adso_save_and_activate`, `bw_adso_add_field`, `bw_adso_add_key`, `bw_adso_convert_type`, `bw_adso_create`(adsoType 枚举) |
 | InfoArea | `bw_area_*` | `bw_area_create`, `bw_area_get_xml`, `bw_area_validate_exists` |
 | Transformation | `bw_trfn_*` | `bw_trfn_create`, `bw_trfn_save_and_activate`, `bw_trfn_add_rules_and_save`, `bw_trfn_auto_map_and_save` |
 | DTP | `bw_dtp_*` | `bw_dtp_create`, `bw_dtp_execute`, `bw_dtp_save_and_activate` |
