@@ -139,7 +139,8 @@ export const transformationTools = [
   defineTool({
     name: "bw_trfn_set_end_routine_fields",
     description:
-      "Check a list of target field names into the transformation's end routine and save+activate.",
+      "Check a list of target field names into the transformation's end routine and save+activate. " +
+      "Requires an existing END routine — use bw_trfn_ensure_end_routine first if none.",
     params: z.object({
       id: z.string(),
       fields: z
@@ -155,6 +156,58 @@ export const transformationTools = [
       const { id, fields, outputPath, ...opts } = args
       const raw = await client.setEndRoutineFields(id, fields, opts)
       return shapeSaveResult(raw as unknown as Record<string, unknown>, outputPath)
+    },
+  }),
+
+  defineTool({
+    name: "bw_trfn_ensure_end_routine",
+    description:
+      "Ensure the transformation has an END routine (create if missing). " +
+      "Eclipse flow: PUT END rule with classNameM → server generates AMDP class → activate class → activate TRFN. " +
+      "Idempotent when END already exists. Optional fields are checked into the end-routine setFields list.",
+    params: z.object({
+      id: z.string(),
+      fields: z
+        .array(z.string())
+        .optional()
+        .describe("Optional target field names to check into the end routine."),
+      transport: z.string().optional(),
+      transportDescription: z.string().optional(),
+      autoActivate: z.boolean().optional().describe("Activate TRFN after class (default true)."),
+      activateClass: z
+        .boolean()
+        .optional()
+        .describe("Activate AMDP class after PUT (default true)."),
+      outputPath: outputPathField,
+    }),
+    mutating: true,
+    async run(client, args) {
+      const { id, outputPath: _op, ...opts } = args
+      return client.ensureEndRoutine(id, opts)
+    },
+  }),
+
+  defineTool({
+    name: "bw_trfn_ensure_start_routine",
+    description:
+      "Ensure the transformation has a START routine (create if missing). Same flow as ensure_end_routine with GLOBAL_START. " +
+      "Optional fields are source field refs on the START rule.",
+    params: z.object({
+      id: z.string(),
+      fields: z
+        .array(z.string())
+        .optional()
+        .describe("Optional source field names for the START rule."),
+      transport: z.string().optional(),
+      transportDescription: z.string().optional(),
+      autoActivate: z.boolean().optional(),
+      activateClass: z.boolean().optional(),
+      outputPath: outputPathField,
+    }),
+    mutating: true,
+    async run(client, args) {
+      const { id, outputPath: _op, ...opts } = args
+      return client.ensureStartRoutine(id, opts)
     },
   }),
 
