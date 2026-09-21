@@ -18,7 +18,7 @@ description: 在为本仓库写或改任何行为断言（文档、README、代�
 ## 本仓库的证据家
 
 - **`npm run list-tools`** —— 工具目录与注册行为的证据（无需真实连接即可核对）。
-- **BW 系统行为** —— 归属 [bw-adt-api](../../../../bw-adt-api) 的证据面（其 `docs/VERIFIED_APIS.md` 证据账本）；本仓库不产生对 BW 行为的新断言，引用库行为时以该账本为准。
+- **BW 系统行为** —— 归属 [bw-adt-api](https://github.com/lingcSun/bw-adt-api/blob/master/docs/VERIFIED_APIS.md) 的证据面（其 `docs/VERIFIED_APIS.md` 证据账本）；本仓库不产生对 BW 行为的新断言，引用库行为时以该账本为准。
 
 ## 校验
 

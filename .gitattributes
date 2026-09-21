@@ -1,0 +1,2 @@
+# .md 一律 LF：verify:agents 的字符预算按原始字节计，CRLF 会让 windows CI 超预算
+*.md text eol=lf
