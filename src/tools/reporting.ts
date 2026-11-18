@@ -2,7 +2,7 @@
  * BICS Reporting / Provider Preview tools.
  *
  * Multidimensional preview for ADSO / InfoObject / Composite Provider via
- * /sap/bw/modeling/comp/reporting (same as Eclipse Dashboard Preview).
+ * /sap/bw/modeling/comp/reporting BICS 预览端点。
  * Prefer bw_reporting_preview for everyday use; initial/update for full control.
  */
 import { z } from "zod"
@@ -137,7 +137,7 @@ export const reportingTools = [
     name: "bw_reporting_preview",
     description:
       "Convenience BICS preview: GET metadata → put named characteristics on ROWS " +
-      "(optional COLUMNS) → POST refresh. Same as Eclipse Dashboard Preview for ADSO / " +
+      "(optional COLUMNS) → POST refresh. BICS preview for ADSO / " +
       "characteristic / Composite Provider. Inline response is flatRows (paginated); " +
       "set outputPath for the full QueryView.",
     params: z.object({

@@ -18,7 +18,7 @@ export const transformationTools = [
   defineTool({
     name: "bw_trfn_create",
     description:
-      "Create a transformation via the 8TRANSIENT transient flow (Eclipse wizard equivalent). " +
+      "Create a transformation via the 8TRANSIENT transient flow. " +
       "Server mints the id, hydrates all source/target elements and default rules from the two " +
       "providers. Returns trfnId + hydrated XML. packageName defaults to $TMP; pass a real " +
       "package together with transport to register in a workbench request. " +
@@ -163,7 +163,7 @@ export const transformationTools = [
     name: "bw_trfn_ensure_end_routine",
     description:
       "Ensure the transformation has an END routine (create if missing). " +
-      "Eclipse flow: PUT END rule with classNameM → server generates AMDP class → activate class → activate TRFN. " +
+      "Workflow: PUT END rule with classNameM → server generates AMDP class → activate class → activate TRFN. " +
       "Idempotent when END already exists. Optional fields are checked into the end-routine setFields list.",
     params: z.object({
       id: z.string(),

@@ -1,7 +1,7 @@
 /**
  * InfoArea tools.
  *
- * Create flow mirrors Eclipse ADT Communication Log:
+ * Create flow:
  *   validate parent exists → validate new name → lock → POST create → unlock
  * (no activate; InfoArea active version is /a).
  */

@@ -252,10 +252,10 @@ export const adsoTools = [
     description:
       "Atomic edit: add a field to an ADSO and save (activate optional via autoActivate, default true). " +
       "Two modes: (1) local field — pass dataType (CUKY emits currency shape; CURR→KYF/SUM); " +
-      "(2) InfoObject hang — pass infoObjectName. UNI/KYF hang XML matches Eclipse 2026-11-17 ZL_FID01 " +
-      "(keep/inlineType/associationType; UNI needs infoObjectType=UNI or baseInfoObjectName; " +
-      "KYF needs unitCurrencyElement). Prefer currency IOBJ first, then amount. " +
-      "Replace local→IOBJ: hang new, re-point unitCurrencyElement, bw_adso_remove_field old local. " +
+      "(2) InfoObject hang — pass infoObjectName (keep/inlineType/associationType; " +
+      "UNI needs infoObjectType=UNI or baseInfoObjectName; KYF needs unitCurrencyElement). " +
+      "Prefer currency IOBJ first, then amount. Replace local→IOBJ: hang new, " +
+      "re-point unitCurrencyElement, bw_adso_remove_field old local. " +
       "success=save/activate; activated only means activation was attempted.",
     params: z.object({
       id: z.string(),
@@ -264,14 +264,14 @@ export const adsoTools = [
         .string()
         .optional()
         .describe(
-          "Hang an existing InfoObject (e.g. ZK_WSL, ZC_RWCUR). Emits Eclipse hang skeleton for UNI/KYF."
+          "Hang an existing InfoObject. Emits hang skeleton for UNI/KYF."
         ),
       infoObjectType: z
         .enum(["CHA", "KYF", "UNI"])
         .optional()
         .describe(
           "Hang type. Omit: unitCurrencyElement→KYF; baseInfoObjectName/CUKY→UNI; else CHA. " +
-            "Pass UNI when hanging ZC_RWCUR so dim stays UNI (not inherited TIM/CHA)."
+            "Pass UNI when hanging a currency IOBJ so dim stays UNI."
         ),
       baseInfoObjectName: z
         .string()
@@ -321,8 +321,8 @@ export const adsoTools = [
     name: "bw_adso_remove_field",
     description:
       "Atomic edit: remove a field element from an ADSO and save (activate optional, default true). " +
-      "Works for local fields and InfoObject hangs. Typical local→IOBJ migration " +
-      "(2026-11-17 ZL_FID15): after hanging ZC_RWCUR / ZK_WSL, call this to drop the old local RWCUR. " +
+      "Works for local fields and InfoObject hangs. Typical local→IOBJ migration: " +
+      "hang new IOBJ first, then remove the old local field. " +
       "Does not rewrite other fields' unitCurrencyElement — re-point those first if needed. " +
       "PUT contract same as bw_adso_save_and_activate (timestamp + Transport-Lock-Holder).",
     params: z.object({
@@ -413,7 +413,7 @@ export const adsoTools = [
     name: "bw_adso_convert_type",
     description:
       "Convert an existing ADSO between types (standard | staging | dataMart | directUpdate). " +
-      "Encodes the verified server semantics (VERIFIED_APIS D1/D7/D8): applies the target " +
+      "Applies the target " +
       "type's attribute package, strips <keyElement> when converting to " +
       "staging/inboundQueueOnly (keyless OK there), REQUIRES a key for staging modes that " +
       "activate data, auto-disables activateData/writeChangelog for directUpdate, validates " +
@@ -447,7 +447,7 @@ export const adsoTools = [
       id: z.string(),
       infoObjectName: z.string().describe("InfoObject technical name to use as the key (e.g. 0MATERIAL)."),
       length: z.number().int().positive().optional().describe(
-        "inlineType length written into the key element. Default 40 (the only live-verified value)."
+        "inlineType length written into the key element. Default 40."
       ),
       transport: z.string().optional(),
       createTransport: z.boolean().optional(),

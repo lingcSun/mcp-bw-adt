@@ -102,8 +102,8 @@ export const infoobjectTools = [
       "Create an InfoObject (choose iobjType). " +
       "CHA: CHAR skeleton + PUT (length/description). " +
       "UNI: currency/unit (CUKY, refs 0CURRENCY by default); $TMP or package+transport. " +
-      "KYF: amount key figure (CURR/AMO/SUM); pass unitInfoObject (e.g. ZC_CUR / ZC_RWCUR) — " +
-      "POST creates KYF then PUT binds the unit (verified 2026-11-17 ZK_AMT). " +
+      "KYF: amount key figure (CURR/AMO/SUM); pass unitInfoObject — " +
+      "POST creates KYF then PUT binds the unit. " +
       "Real package REQUIRES transport; omit → $TMP. Check verification.persisted.",
     params: z.object({
       iobjType: z
@@ -191,7 +191,7 @@ export const infoobjectTools = [
           args.iobjType === "CHA"
             ? "CHA create requires InfoObjectDomain.createCha"
             : args.iobjType === "UNI"
-              ? "UNI create requires bw-adt-api with InfoObjectDomain.createUnit (2026-11-17 build)"
+              ? "UNI create requires bw-adt-api with InfoObjectDomain.createUnit"
               : "create requires bw-adt-api with InfoObjectDomain.create"
         )
       }

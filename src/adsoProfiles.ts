@@ -1,10 +1,9 @@
 /**
- * ADSO 类型语义层（MCP 专属）——把 VERIFIED_APIS D1/D7/D8 的实测规则编译成
+ * ADSO 类型语义层（MCP 专属）——将 ADSO 类型与选项的服务端约束编译为
  * 声明式类型档案（TYPE_PROFILES），供 bw_adso_create / bw_adso_convert_type 使用。
  *
- * 设计原则：库（bw-adt-api）保留原语能力；本模块是 Eclipse 前台同款的语义封装——
+ * 设计原则：库（bw-adt-api）保留原语能力；本模块做语义封装——
  * 选类型 → 只出现该类型的选项 → 约束自动满足或给出可操作报错。
- * 每条规则都引用 docs/VERIFIED_APIS.md（bw-adt-api 仓库）第 8 节 D1/D7/D8 证据。
  */
 import type { BWAdtClient } from "bw-adt-api"
 
@@ -55,7 +54,7 @@ export class ProfileConstraintError extends Error {
   }
 }
 
-/** 标准 DSO 选项校验（D7 实测矩阵） */
+/** 标准 DSO 选项校验矩阵 */
 export function validateStandardOptions(o: StandardOptions = {}): void {
   const snap = o.snapshotSupport === true
   const uniq = o.uniqueDataRecords === true
@@ -74,7 +73,7 @@ export function validateStandardOptions(o: StandardOptions = {}): void {
   }
 }
 
-/** Staging 模式校验（D8 实测矩阵） */
+/** Staging 模式校验矩阵 */
 export function validateStagingOptions(o: StagingOptions = {}): void {
   const mode = o.mode || "inboundQueueOnly"
   if (mode === "inboundQueueOnly" && o.reportingEnabled) {
@@ -128,7 +127,7 @@ export function expandProfile(req: TypeProfileRequest): ProfileApplication {
       }
       return {
         attrs,
-        // inboundQueueOnly 无激活→无键合法且是抓包形态；compress/corporateMemory 有激活→键必需（保留 keyElement）
+        // inboundQueueOnly 无激活→无键合法；compress/corporateMemory 有激活→键必需（保留 keyElement）
         stripKeyElement: mode === "inboundQueueOnly",
         notes: [
           "staging: 落地/缓冲，不走标准激活闭环（表布局与标准不同）",

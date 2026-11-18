@@ -1,7 +1,4 @@
-/**
- * Condensed ST22 dump sections for LLM-sized responses.
- * Ported from mcp-abap-abap-adt-api FeedHandlers (textOf / splitSections / condenseDump).
- */
+/** Condensed ST22 dump sections for LLM-sized responses. */
 
 /** Strip HTML tags, decode entities and collapse whitespace to plain text. */
 export function textOf(html: string): string {
