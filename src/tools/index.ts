@@ -1,5 +1,6 @@
 /** Aggregate of all tool groups. Add new groups here. */
 import { systemTools } from "./system"
+import { dumpsTools } from "./dumps"
 import { searchTools } from "./search"
 import { dataflowTools } from "./dataflow"
 import { genericTools } from "./generic"
@@ -14,14 +15,17 @@ import { infoobjectTools } from "./infoobject"
 import { ddicTools } from "./ddic"
 import { reportingTools } from "./reporting"
 import { transportTools } from "./transport"
+import { hcprTools } from "./hcpr"
 
 export const ALL_TOOLS = [
   ...systemTools,
+  ...dumpsTools,
   ...searchTools,
   ...dataflowTools,
   ...genericTools,
   ...adsoTools,
   ...areaTools,
+  ...hcprTools,
   ...transformationTools,
   ...dtpTools,
   ...datasourceTools,

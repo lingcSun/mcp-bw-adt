@@ -250,19 +250,54 @@ export const adsoTools = [
   defineTool({
     name: "bw_adso_add_field",
     description:
-      "Atomic edit: add a local 'field'-type field to an ADSO and save (activate optional via autoActivate, default true). " +
-      "success reflects save/activate outcome; activated only means activation was attempted. " +
-      "Internally reads current XML, inserts the field, and saves — no large XML handling by the caller.",
+      "Atomic edit: add a field to an ADSO and save (activate optional via autoActivate, default true). " +
+      "Two modes: (1) local field — pass dataType (CUKY emits currency shape; CURR→KYF/SUM); " +
+      "(2) InfoObject hang — pass infoObjectName. UNI/KYF hang XML matches Eclipse 2026-11-17 ZL_FID01 " +
+      "(keep/inlineType/associationType; UNI needs infoObjectType=UNI or baseInfoObjectName; " +
+      "KYF needs unitCurrencyElement). Prefer currency IOBJ first, then amount. " +
+      "Replace local→IOBJ: hang new, re-point unitCurrencyElement, bw_adso_remove_field old local. " +
+      "success=save/activate; activated only means activation was attempted.",
     params: z.object({
       id: z.string(),
-      name: z.string().describe("Field technical name."),
-      dataType: z.enum(FIELD_DATA_TYPES).optional(),
+      name: z.string().describe("Field technical name on the ADSO (may differ from infoObjectName)."),
+      infoObjectName: z
+        .string()
+        .optional()
+        .describe(
+          "Hang an existing InfoObject (e.g. ZK_WSL, ZC_RWCUR). Emits Eclipse hang skeleton for UNI/KYF."
+        ),
+      infoObjectType: z
+        .enum(["CHA", "KYF", "UNI"])
+        .optional()
+        .describe(
+          "Hang type. Omit: unitCurrencyElement→KYF; baseInfoObjectName/CUKY→UNI; else CHA. " +
+            "Pass UNI when hanging ZC_RWCUR so dim stays UNI (not inherited TIM/CHA)."
+        ),
+      baseInfoObjectName: z
+        .string()
+        .optional()
+        .describe("UNI hang base IOBJ; default 0CURRENCY."),
+      dataType: z.enum(FIELD_DATA_TYPES).optional().describe("Local field DDIC type. Ignored when infoObjectName is set (except CUKY hint→UNI)."),
       length: z.number().int().positive().optional(),
       label: z.string().optional(),
-      dimension: z.string().optional(),
+      dimension: z
+        .string()
+        .optional()
+        .describe("Short (CHA/UNI/KYF) or full (#///UNI§). Defaults: UNI hang→UNI, KYF hang→KYF, else inherit/CHA."),
       semanticType: z.string().optional(),
       precision: z.number().int().positive().optional(),
       scale: z.number().int().nonnegative().optional(),
+      unitCurrencyElement: z
+        .string()
+        .optional()
+        .describe(
+          "Currency/unit field name on this ADSO to bind (e.g. ZC_RWCUR or #///ZC_RWCUR). " +
+            "Use when adding an amount (local CURR or KYF IOBJ hang)."
+        ),
+      aggregationBehavior: z
+        .enum(["SUM", "MAX", "MIN", "NOP", "NONE"])
+        .optional()
+        .describe("Aggregation; KYF/CURR defaults SUM; UNI hang defaults NONE."),
       transport: z.string().optional(),
       createTransport: z.boolean().optional(),
       transportDescription: z.string().optional(),
@@ -279,6 +314,35 @@ export const adsoTools = [
         autoActivate,
       })
       return shapeSaveResult(raw as unknown as Record<string, unknown>, outputPath)
+    },
+  }),
+
+  defineTool({
+    name: "bw_adso_remove_field",
+    description:
+      "Atomic edit: remove a field element from an ADSO and save (activate optional, default true). " +
+      "Works for local fields and InfoObject hangs. Typical local→IOBJ migration " +
+      "(2026-11-17 ZL_FID15): after hanging ZC_RWCUR / ZK_WSL, call this to drop the old local RWCUR. " +
+      "Does not rewrite other fields' unitCurrencyElement — re-point those first if needed. " +
+      "PUT contract same as bw_adso_save_and_activate (timestamp + Transport-Lock-Holder).",
+    params: z.object({
+      id: z.string(),
+      name: z.string().describe("Field technical name to remove (e.g. RWCUR)."),
+      transport: z.string().optional(),
+      createTransport: z.boolean().optional(),
+      transportDescription: z.string().optional(),
+      autoActivate: z.boolean().optional(),
+      outputPath: outputPathField,
+    }),
+    mutating: true,
+    async run(client, args) {
+      const raw = await client.removeADSOField(args.id, args.name, {
+        transport: args.transport,
+        createTransport: args.createTransport,
+        transportDescription: args.transportDescription,
+        autoActivate: args.autoActivate,
+      })
+      return shapeSaveResult(raw as unknown as Record<string, unknown>, args.outputPath)
     },
   }),
 

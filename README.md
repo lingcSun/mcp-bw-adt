@@ -7,7 +7,7 @@ MCP-compatible client.
 
 It exposes a **Public** subset of `BWAdtClient` domain operations (ADSO, Transformation, DTP,
 DataSource, Process Chain, InfoObject, DDIC, search, dataflow, transports, …) as MCP tools —
-**75 tools** after Public-surface consolidation — with a **local-file buffering layer**
+**77 tools** after Public-surface consolidation — with a **local-file buffering layer**
 that keeps large XML payloads and table data out of the LLM context window.
 
 > **BREAKING (Public surface):** Atomic `lock` / `unlock` / bare `update` / bare `activate`,
@@ -165,6 +165,7 @@ schemas. Domains:
 | Domain | Prefix | Example tools |
 |---|---|---|
 | System / env | `bw_system_*`, `bw_env_*`, `bw_disconnect` | `bw_env_list`, `bw_env_switch`, `bw_system_status` |
+| Runtime dumps (ST22) | `bw_dumps` | `bw_dumps`（`query` 如 `maxNumber=5`；返回浓缩字段非完整 HTML） |
 | Search | `bw_search_*` | `bw_search_objects`, `bw_adso_transformations` |
 | Dataflow / lineage | `bw_dataflow_*` | `bw_dataflow_get`, `bw_dataflow_lineage` |
 | Generic CRUD | `bw_object_*` | `bw_object_create/update/delete/activate` |
@@ -175,7 +176,7 @@ schemas. Domains:
 | DataSource | `bw_datasource_*` | `bw_datasource_save_and_activate`, `bw_datasource_merge_proposal` |
 | Replication | `bw_replication_*` | `bw_replication_replicate_full` |
 | Process Chain | `bw_processchain_*` | `bw_processchain_execute`, `bw_processchain_logs` |
-| InfoObject | `bw_infoobject_*` | `bw_infoobject_get` |
+| InfoObject | `bw_infoobject_*` | `bw_infoobject_get`, `bw_infoobject_create`(仅 KYF 关键指标) |
 | DDIC tables / data | `bw_table_*` | `bw_table_get_data`, `bw_table_query_sql` |
 | BICS reporting / preview | `bw_reporting_*` | `bw_reporting_preview`, `bw_reporting_initial_view` |
 | Transport / CTS | `bw_transport_*` | `bw_transport_check`, `bw_transport_create` |

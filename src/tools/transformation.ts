@@ -215,7 +215,9 @@ export const transformationTools = [
     name: "bw_trfn_add_rules_and_save",
     description:
       "Atomic edit: add DIRECT mapping rules (source→target pairs) to a transformation and save+activate. " +
-      "target omitted means same-name mapping.",
+      "target omitted means same-name mapping. For amount+currency pairs (WSL+RWCUR→ZK_WSL+ZC_RWCUR) " +
+      "prefer library addPairedAmountCurrencyRule (FROM_SOURCE, MAIN+MINOR) via get_xml → edit → " +
+      "save_and_activate; do not add two separate DIRECT rules.",
     params: z.object({
       id: z.string(),
       rules: z

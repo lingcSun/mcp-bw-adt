@@ -39,12 +39,15 @@ export const genericTools = [
     }),
     mutating: true,
     async run(client, args) {
+      // ADSO/InfoArea/TRFN/DTP 删除走 lockHandle 模式（见 bwObject.delete）；
+      // MCP Public 面无原子 lock 工具，此处内部加锁。
       const needsSelfLock =
-        (args.objectType === "adso" || args.objectType === "area") &&
+        (args.objectType === "adso" ||
+          args.objectType === "area" ||
+          args.objectType === "trfn" ||
+          args.objectType === "dtpa") &&
         args.lockHandle === undefined
       if (needsSelfLock) {
-        // MCP Public 面没有原子 lock 工具，adso/area 删除在此内部加锁；
-        // BWObject.delete 的 lockHandle 模式自带 unlock（失败可忽略）。
         const obj = await client.getObject(args.objectType, args.objectName)
         const lock = await obj.lock()
         return obj.delete({ lockHandle: lock.lockHandle, transport: args.transport })
